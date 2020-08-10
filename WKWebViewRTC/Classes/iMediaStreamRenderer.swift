@@ -54,7 +54,7 @@ class iMediaStreamRenderer : NSObject, RTCVideoViewDelegate {
 		self.elementView.layer.masksToBounds = true
 
 		// Place the video element view inside the WebView's superview
-		self.webView.addSubview(self.elementView)
+        self.webView.addSubview(self.elementView)
 		self.webView.isOpaque = false
 		self.webView.backgroundColor = UIColor.clear
 		

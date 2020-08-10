@@ -589,20 +589,27 @@ class iRTCPeerConnection : NSObject, RTCPeerConnectionDelegate {
 		if (stream == nil) {
 			return nil;
 		}
+        
+        var currentPluginMediaStream : iMediaStream? = nil;
 
-		if (pluginMediaStreams[stream!.streamId] == nil) {
-			let pluginMediaStream = iMediaStream(rtcMediaStream: stream!)
+        for (_, pluginMediaStream) in pluginMediaStreams {
+            if (pluginMediaStream.rtcMediaStream == stream) {
+                currentPluginMediaStream = pluginMediaStream;
+                break;
+            }
+        }
 
-			pluginMediaStream.run()
+        if (currentPluginMediaStream == nil) {
 
-			// Let the plugin store it in its dictionary.
-			streamIds.append(stream!.streamId)
-			pluginMediaStreams[stream!.streamId] = pluginMediaStream;
+            currentPluginMediaStream = iMediaStream(rtcMediaStream: stream!)
 
-			self.eventListenerForAddStream(pluginMediaStream)
-		}
+            currentPluginMediaStream!.run()
 
-		return pluginMediaStreams[stream!.streamId]!;
+            // Let the plugin store it in its dictionary.
+            pluginMediaStreams[currentPluginMediaStream!.id] = currentPluginMediaStream;
+        }
+
+        return currentPluginMediaStream;
 	}
 
 	/** Called when media is received on a new stream from remote peer. */
@@ -610,6 +617,8 @@ class iRTCPeerConnection : NSObject, RTCPeerConnectionDelegate {
 		NSLog("iRTCPeerConnection | onaddstream")
 
 		let pluginMediaStream = getiMediaStream(stream: stream);
+        
+        self.eventListenerForAddStream(pluginMediaStream!)
 
 		// Fire the 'addstream' event so the JS will create a new MediaStream.
 		self.eventListener([
@@ -625,8 +634,10 @@ class iRTCPeerConnection : NSObject, RTCPeerConnectionDelegate {
 
 		let pluginMediaStream = pluginMediaStreams[stream.streamId];
 
-		// Let the plugin remove it from its dictionary.
 		self.eventListenerForRemoveStream(pluginMediaStream!.id)
+
+        // Let the plugin remove it from its dictionary.
+        pluginMediaStreams[pluginMediaStream!.id] = nil;
 
 		self.eventListener([
 			"type": "removestream",

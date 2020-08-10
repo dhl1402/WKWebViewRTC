@@ -17,8 +17,8 @@ module.exports = RTCDataChannel;
  * Dependencies.
  */
 var
-	debug = require('debug')('iosrtc:RTCDataChannel'),
-	debugerror = require('debug')('iosrtc:ERROR:RTCDataChannel'),
+	debug = require('./debug')('iosrtc:RTCDataChannel'),
+	debugerror = require('./debug')('iosrtc:ERROR:RTCDataChannel'),
 	exec = require('./IOSExec'),
 	randomNumber = require('random-number').generator({min: 10000, max: 99999, integer: true}),
 	EventTarget = require('./EventTarget');

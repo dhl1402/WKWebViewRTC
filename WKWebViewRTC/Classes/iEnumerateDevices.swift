@@ -60,8 +60,15 @@ class iEnumerateDevices {
 fileprivate func getAllVideoDevices() -> [MediaDeviceInfo] {
 	
 	var videoDevicesArr : [MediaDeviceInfo] = []
+	var deviceTypes: [AVCaptureDevice.DeviceType] = [.builtInTelephotoCamera, .builtInWideAngleCamera]
+	if #available(iOS 10.2, *) {
+		deviceTypes.append(.builtInDualCamera)
+		if #available(iOS 11.1, *) {
+			deviceTypes.append(.builtInTrueDepthCamera)
+		}
+	}
 	let videoDevices: [AVCaptureDevice] = AVCaptureDevice.DiscoverySession.init(
-		deviceTypes: [AVCaptureDevice.DeviceType.builtInWideAngleCamera, AVCaptureDevice.DeviceType.builtInDualCamera],
+		deviceTypes: deviceTypes,
 		mediaType: AVMediaType.video,
 		position: AVCaptureDevice.Position.unspecified
 	).devices
@@ -124,44 +131,41 @@ fileprivate func getAllAudioDevices() -> [MediaDeviceInfo] {
 	var audioDevicesArr : [MediaDeviceInfo] = []
 	let audioInputDevices: [AVAudioSessionPortDescription] = audioSession.availableInputs!
 	var bluetoothDevice: AVAudioSessionPortDescription? = nil
-	var isBluetoothConnected : Bool = false
 	var wiredDevice: AVAudioSessionPortDescription? = nil
-	var isWiredConnected : Bool = false
 	var builtMicDevice: AVAudioSessionPortDescription? = nil
-	
+
 	for audioInput in audioInputDevices {
-		
+
 		let device = MediaDeviceInfo(
 			deviceId: audioInput.uid,
 			kind: "audioinput",
 			label: audioInput.portName
 		);
-		
+
 		audioDevicesArr.append(device)
-		
+
 		// Initialize audioInputSelected. Default Built-In Microphone
 		if audioInput.portType == AVAudioSession.Port.builtInMic {
 			builtMicDevice = audioInput
 		}
-		
+
 		if audioInput.portType == .bluetoothHFP || audioInput.portType == .bluetoothA2DP {
 			bluetoothDevice = audioInput
-			isBluetoothConnected = true
 		}
-		
+
 		if audioInput.portType == .usbAudio || audioInput.portType == .headsetMic {
 			wiredDevice = audioInput
-			isWiredConnected = true
 		}
 	}
-	
+
 	// Initialize audioInputSelected. Priority: [Wired - Wireless - Built-In Microphone]
-	if isWiredConnected {
+	if wiredDevice != nil {
 		iRTCAudioController.saveInputAudioDevice(inputDeviceUID: wiredDevice!.uid)
-	} else if isBluetoothConnected {
+	} else if bluetoothDevice != nil {
 		iRTCAudioController.saveInputAudioDevice(inputDeviceUID: bluetoothDevice!.uid)
-	} else {
+	} else if builtMicDevice != nil {
 		iRTCAudioController.saveInputAudioDevice(inputDeviceUID: builtMicDevice!.uid)
 	}
 	return audioDevicesArr
 }
+

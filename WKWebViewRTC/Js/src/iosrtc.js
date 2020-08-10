@@ -12,6 +12,11 @@
  */
 
 var
+	// Dictionary of MediaStreamRenderers.
+	// - key: MediaStreamRenderer id.
+	// - value: MediaStreamRenderer.
+	mediaStreamRenderers = {},
+
 	// Dictionary of MediaStreams.
 	// - key: MediaStream blobId.
 	// - value: MediaStream.
@@ -21,7 +26,7 @@ var
 /**
  * Dependencies.
  */
-	debug                  = require('debug')('iosrtc'),
+	debug                  = require('./debug')('iosrtc'),
 	exec                   = require('./IOSExec'),
 	domready               = require('domready'),
 
@@ -30,9 +35,10 @@ var
 	RTCPeerConnection      = require('./RTCPeerConnection'),
 	RTCSessionDescription  = require('./RTCSessionDescription'),
 	RTCIceCandidate        = require('./RTCIceCandidate'),
+	MediaDevices           = require('./MediaDevices'),
 	MediaStream            = require('./MediaStream'),
-	MediaStreamTrack       = require('./MediaStreamTrack');
-
+	MediaStreamTrack       = require('./MediaStreamTrack'),
+	videoElementsHandler   = require('./videoElementsHandler');
 
 /**
  * Expose the iosrtc object.
@@ -45,8 +51,15 @@ module.exports = {
 	RTCPeerConnection:     RTCPeerConnection,
 	RTCSessionDescription: RTCSessionDescription,
 	RTCIceCandidate:       RTCIceCandidate,
+	MediaDevices:          MediaDevices,
 	MediaStream:           MediaStream,
 	MediaStreamTrack:      MediaStreamTrack,
+
+	// Expose a function to refresh current videos rendering a MediaStream.
+	refreshVideos:         videoElementsHandler.refreshVideos,
+
+	// Expose a function to handle a video not yet inserted in the DOM.
+	observeVideo:          videoElementsHandler.observeVideo,
 
 	// Select audio output (earpiece or speaker).
 	selectAudioOutput:     selectAudioOutput,
@@ -64,13 +77,15 @@ module.exports = {
 	registerGlobals:       registerGlobals,
 
 	// Expose the debug module.
-	debug:                 require('debug'),
+	debug:                 require('./debug'),
 
 	// Debug function to see what happens internally.
 	dump:                  dump,
 
 	// Debug Stores to see what happens internally.
+	mediaStreamRenderers:  mediaStreamRenderers,
 	mediaStreams:          mediaStreams,
+
 	nativeCallback:		   exec.nativeCallback
 };
 registerGlobals();
@@ -80,8 +95,17 @@ requestPermission(true, true, function (result) {
 	console.log('requestPermission.result', result);
 	});
 domready(function () {
-	
+	// Let the MediaStream class and the videoElementsHandler share same MediaStreams container.
 	MediaStream.setMediaStreams(mediaStreams);
+	videoElementsHandler(mediaStreams, mediaStreamRenderers);
+
+	// refreshVideos on device orientation change to resize peers video
+	// while local video will resize du orientation change
+	window.addEventListener('resize', function () {
+		videoElementsHandler.refreshVideos();
+	});
+	// const peer = new Peer({initiator: true, trickle: false})
+	// peer.on('signal', data => debug('domready | on signal', JSON.stringify(data)))
 });
 
 function selectAudioOutput(output) {
@@ -183,7 +207,7 @@ function registerGlobals(doNotRestoreCallbacksSupport) {
 	}
 
 	if (!navigator.mediaDevices) {
-		navigator.mediaDevices = {};
+		navigator.mediaDevices = new MediaDevices();
 	}
 
 	// Restore Callback support

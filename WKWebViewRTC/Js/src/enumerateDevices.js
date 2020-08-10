@@ -17,7 +17,7 @@ module.exports = enumerateDevices;
  * Dependencies.
  */
 var
-	debug = require('debug')('iosrtc:enumerateDevices'),
+	debug = require('./debug')('iosrtc:enumerateDevices'),
 	exec = require('./IOSExec'),
 	MediaDeviceInfo = require('./MediaDeviceInfo'),
 	Errors = require('./Errors');

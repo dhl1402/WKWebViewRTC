@@ -120,6 +120,8 @@ class iRTCPeerConnectionConstraints {
 				finalKey =  "OfferToReceiveAudio";
 			} else if (finalKey == "offerToReceiveVideo") {
 				finalKey =  "OfferToReceiveVideo";
+			} else if (finalKey == "iceRestart") {
+				finalKey =  "IceRestart";
 			}
 			
 			// Filter to avoid injection

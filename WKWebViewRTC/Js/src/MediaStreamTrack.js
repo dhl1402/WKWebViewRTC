@@ -22,7 +22,7 @@ module.exports = MediaStreamTrack;
  * Dependencies.
  */
 var
-	debug = require('debug')('iosrtc:MediaStreamTrack'),
+	debug = require('./debug')('iosrtc:MediaStreamTrack'),
 	exec = require('./IOSExec'),
 	enumerateDevices = require('./enumerateDevices'),
 	MediaTrackCapabilities = require('./MediaTrackCapabilities'),
